@@ -9,58 +9,143 @@ binary_sensor:
       return id(treadmill_speed_goal_sensor).state > 0.0;
 
 
-# Speed Up Button — физическая кнопка на GPIO13, увеличивает скорость.
-  - platform: gpio
-    pin:
-      number: 13
-      mode: INPUT_PULLUP
-      inverted: true
+# Original treadmill button matrix. Rows: gul(0)/orange(1)/grön(2)/blå(3).
+# Columns: svart(0)/vit(1)/grå(2)/lila(3). See matrix_keypad: in
+# 10-hardware.yaml. row2,col0 / row3,col0 / row3,col1 are unwired positions.
+  - platform: matrix_keypad
     name: "Speed Up Button"
     entity_category: diagnostic
+    row: 0
+    col: 0
     on_press:
       - button.press: speed_up_button_large
-    filters:
-      - delayed_on: 50ms
-      - delayed_off: 50ms
 
+  - platform: matrix_keypad
+    name: "Start/Stop Button"
+    entity_category: diagnostic
+    row: 0
+    col: 1
+    on_press:
+      - lambda: |-
+          // Toggle: halt without ending the session (same as pause/resume),
+          // never a full stop_program reset.
+          if (id(motor_running)) {
+            id(pause_training).execute();
+          } else if (id(pause_active)) {
+            id(resume_training).execute();
+          } else if (id(program_select).current_option() != "None") {
+            id(start_program).execute();
+          } else {
+            id(start_manual).execute();
+          }
 
-# Speed Down Button — физическая кнопка на GPIO14, уменьшает скорость.
-  - platform: gpio
-    pin:
-      number: 14
-      mode: INPUT_PULLUP
-      inverted: true
+  - platform: matrix_keypad
+    name: "Settings Button"
+    entity_category: diagnostic
+    row: 0
+    col: 2
+    on_press:
+      # Toggle: jump to the settings page (13), or back to whatever page we
+      # were on if already there - so the session stays reachable even if
+      # page 13 has no back button of its own.
+      - lambda: |-
+          if (id(current_page) == 13) {
+            ESP_LOGI("Keypad", "Settings pressed - returning to page %d", id(settings_return_page));
+            id(display_nextion).send_command_printf("page %d", id(settings_return_page));
+          } else {
+            id(settings_return_page) = id(current_page);
+            ESP_LOGI("Keypad", "Settings pressed - opening settings (was on page %d)", id(settings_return_page));
+            id(display_nextion).send_command_printf("page 13");
+          }
+
+  - platform: matrix_keypad
     name: "Speed Down Button"
     entity_category: diagnostic
+    row: 0
+    col: 3
     on_press:
       - button.press: speed_down_button_large
-    filters:
-      - delayed_on: 50ms
-      - delayed_off: 50ms
 
+  - platform: matrix_keypad
+    name: "Incline Preset 3 Button"
+    entity_category: diagnostic
+    row: 1
+    col: 0
+    on_press:
+      - lambda: |-
+          id(set_incline).publish_state(3.0f);
+          id(target_incline_goal) = 30;
+          id(target_incline) = id(target_incline_goal);
 
-# Incline Up Button — физическая кнопка на GPIO9, увеличивает наклон.
-  - platform: gpio
-    pin:
-      number: 9
-      mode: INPUT_PULLUP
-      inverted: true
+  - platform: matrix_keypad
+    name: "Incline Preset 9 Button"
+    entity_category: diagnostic
+    row: 1
+    col: 1
+    on_press:
+      - lambda: |-
+          id(set_incline).publish_state(9.0f);
+          id(target_incline_goal) = 90;
+          id(target_incline) = id(target_incline_goal);
+
+  - platform: matrix_keypad
+    name: "Incline Preset 6 Button"
+    entity_category: diagnostic
+    row: 1
+    col: 2
+    on_press:
+      - lambda: |-
+          id(set_incline).publish_state(6.0f);
+          id(target_incline_goal) = 60;
+          id(target_incline) = id(target_incline_goal);
+
+  - platform: matrix_keypad
+    name: "Clear/Reset Button"
+    entity_category: diagnostic
+    row: 1
+    col: 3
+    on_press:
+      # Full session reset (distance/time/calories back to 0) - same as the
+      # existing FTMS Control Point "Stop" path.
+      - script.execute: stop_program
+
+  - platform: matrix_keypad
+    name: "Speed Preset 3 Button"
+    entity_category: diagnostic
+    row: 2
+    col: 1
+    on_press:
+      - lambda: id(target_speed_goal) = 30;
+
+  - platform: matrix_keypad
+    name: "Speed Preset 9 Button"
+    entity_category: diagnostic
+    row: 2
+    col: 2
+    on_press:
+      - lambda: id(target_speed_goal) = 90;
+
+  - platform: matrix_keypad
     name: "Incline Up Button"
     entity_category: diagnostic
+    row: 2
+    col: 3
     on_press:
       - button.press: incline_up_button
-    filters:
-      - delayed_on: 50ms
-      - delayed_off: 50ms
 
-# Incline Down Button — физическая кнопка на GPIO10, уменьшает наклон.
-  - platform: gpio
-    pin:
-      number: 10
-      mode: INPUT_PULLUP
-      inverted: true
+  - platform: matrix_keypad
+    name: "Speed Preset 6 Button"
+    entity_category: diagnostic
+    row: 3
+    col: 2
+    on_press:
+      - lambda: id(target_speed_goal) = 60;
+
+  - platform: matrix_keypad
     name: "Incline Down Button"
     entity_category: diagnostic
+    row: 3
+    col: 3
     on_press:
       - button.press: incline_down_button
     filters:

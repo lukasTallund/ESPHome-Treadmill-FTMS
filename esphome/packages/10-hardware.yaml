@@ -10,6 +10,27 @@ one_wire:
   - platform: gpio
     pin: 21
 
+# Original treadmill button matrix (4 rows x 4 columns, 3 positions unused).
+# Rows drive low one at a time; columns read with internal pull-ups.
+# Reuses GPIO9/10/13/14, freed up from the old individual Incline/Speed
+# Up/Down buttons in 80-binary-text.yaml.
+matrix_keypad:
+  id: treadmill_keypad
+  # Default is 1ms, far too short for a worn mechanical/membrane keypad -
+  # contact bounce was likely firing on_press multiple times per physical
+  # press, making the +0.5 speed step feel inconsistent/"nonlinear".
+  debounce_time: 50  # milliseconds (plain int, not a time-string)
+  rows:
+    - pin: GPIO9   # gul
+    - pin: GPIO10  # orange
+    - pin: GPIO8   # grön
+    - pin: GPIO7   # blå
+  columns:
+    - pin: GPIO14  # svart
+    - pin: GPIO13  # vit
+    - pin: GPIO5   # grå
+    - pin: GPIO6   # lila
+
 uart:
   # --- UART 0: дисплей Nextion ---
   # Используется для связи с дисплеем Nextion.

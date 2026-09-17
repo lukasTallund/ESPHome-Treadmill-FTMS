@@ -4,6 +4,13 @@ globals:
     restore_value: no
     initial_value: '0'
 
+  # Page to return to when toggling out of the settings page (13) via the
+  # physical Settings button.
+  - id: settings_return_page
+    type: int
+    restore_value: no
+    initial_value: '0'
+
 #диагностический режим для отладки уарт приема
   - id: diagnostic_mode
     type: bool
