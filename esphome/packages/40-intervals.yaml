@@ -227,22 +227,31 @@ interval:
     then:
       - lambda: |-
           static int last_sent_incline = -1;  // -1 = don't yet know what's physically on the belt
+          static bool was_running = false;    // tracks motor_running edges, for a one-time log on start
           char incline_buffer[13];
           // Если двигатель работает, отправляем текущую цель наклона
           if (id(motor_running)) {
             snprintf(incline_buffer, sizeof(incline_buffer), "[SETINC:%03d]", id(target_incline_goal));
             id(uart_send)->execute(incline_buffer);
-            if (id(target_incline_goal) != last_sent_incline) {
+            // Log on value change, or once right when the motor starts running - even if the
+            // value happens to already match (e.g. resetting to 0), so it's visible that the
+            // send actually happened rather than just inferred from silence.
+            if (id(target_incline_goal) != last_sent_incline || !was_running) {
               last_sent_incline = id(target_incline_goal);
               ESP_LOGI("treadmill", "Incline sent (running): %s", incline_buffer);
             }
+            was_running = true;
           }
-          // If motor is off but the last incline command sent was not 0, reset to 0
-          else if (last_sent_incline != 0) {
-            snprintf(incline_buffer, sizeof(incline_buffer), "[SETINC:000]");
-            id(uart_send)->execute(incline_buffer);
-            last_sent_incline = 0;
-            ESP_LOGI("treadmill", "Incline sent (reset to 0): %s", incline_buffer);
+          // If motor is off, reset the edge tracker, and if the last incline command
+          // sent was not 0, reset to 0
+          else {
+            was_running = false;
+            if (last_sent_incline != 0) {
+              snprintf(incline_buffer, sizeof(incline_buffer), "[SETINC:000]");
+              id(uart_send)->execute(incline_buffer);
+              last_sent_incline = 0;
+              ESP_LOGI("treadmill", "Incline sent (reset to 0): %s", incline_buffer);
+            }
           }
 
 

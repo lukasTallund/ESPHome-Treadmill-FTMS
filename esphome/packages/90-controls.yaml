@@ -241,8 +241,9 @@ number:
   #
   # 1. Treadmill Maximum Incline Level:
   #    максимальное число, которое принимает контроллер дорожки.
-  #    Для текущей дорожки это 15. Если у другой дорожки максимум 12,
-  #    пользователь указывает 12.
+  #    Для текущей дорожки это 20 (подтверждено на реальном железе - выше
+  #    этого значения контроллер просто игнорирует команду, без ошибки).
+  #    Если у другой дорожки максимум 12, пользователь указывает 12.
   #
   # 2. Treadmill Real Grade At Maximum:
   #    реальный уклон полотна в процентах на максимальном уровне.
@@ -267,7 +268,7 @@ number:
     entity_category: config
     optimistic: true
     restore_value: yes
-    initial_value: 15
+    initial_value: 20
 
   - platform: template
     name: "Treadmill Real Grade At Maximum"
@@ -280,7 +281,7 @@ number:
     entity_category: config
     optimistic: true
     restore_value: yes
-    initial_value: 15
+    initial_value: 8.9
 
   - platform: template
     name: "Zwift Incline Intensity"
