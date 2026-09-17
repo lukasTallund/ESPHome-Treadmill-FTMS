@@ -1,5 +1,5 @@
 i2c:
-  sda: GPIO12
+  sda: GPIO10
   scl: GPIO11
   scan: true
   id: bus_a
@@ -8,12 +8,13 @@ i2c:
 # DS18B20 motor temperature sensor bus.
 one_wire:
   - platform: gpio
-    pin: 21
+    pin: 12
 
 # Original treadmill button matrix (4 rows x 4 columns, 3 positions unused).
 # Rows drive low one at a time; columns read with internal pull-ups.
-# Reuses GPIO9/10/13/14, freed up from the old individual Incline/Speed
-# Up/Down buttons in 80-binary-text.yaml.
+# GPIO4/5/6/7/15/16/17/18 are 8 physically consecutive pins on the
+# ESP32-S3-DevKitC-1 header (right after RST), so the whole 8-wire ribbon
+# from the keypad lands on adjacent pins instead of being scattered.
 matrix_keypad:
   id: treadmill_keypad
   # Default is 1ms, far too short for a worn mechanical/membrane keypad -
@@ -21,15 +22,15 @@ matrix_keypad:
   # press, making the +0.5 speed step feel inconsistent/"nonlinear".
   debounce_time: 50  # milliseconds (plain int, not a time-string)
   rows:
-    - pin: GPIO9   # yellow
-    - pin: GPIO10  # orange
-    - pin: GPIO8   # green
+    - pin: GPIO5   # yellow
+    - pin: GPIO4   # orange
+    - pin: GPIO6   # green
     - pin: GPIO7   # blue
   columns:
-    - pin: GPIO14  # black
-    - pin: GPIO13  # white
-    - pin: GPIO5   # gray
-    - pin: GPIO6   # purple
+    - pin: GPIO18  # black
+    - pin: GPIO17  # white
+    - pin: GPIO16  # gray
+    - pin: GPIO15  # purple
 
 uart:
   # --- UART 0: дисплей Nextion ---
@@ -45,8 +46,8 @@ uart:
 # Используется для получения команд обратной связи скорости и наклона.
 #
 # Подключение:
-#   TX → GPIO17 (от ESP к плате)
-#   RX → GPIO18 (от платы к ESP)
+#   TX → GPIO8 (от ESP к плате)
+#   RX → GPIO9 (от платы к ESP)
 #
 # Настройки:
 #   - Скорость: 4800 бод
@@ -67,11 +68,11 @@ uart:
 #   - Блок debug ниже можно включить временно, чтобы видеть «сырые» данные.
 #   - Для постоянной работы он не нужен, достаточно interval + парсер.
   - id: uart_bus
-    tx_pin: 
-      number: GPIO17
+    tx_pin:
+      number: GPIO8
       inverted: false
-    rx_pin: 
-      number: GPIO18
+    rx_pin:
+      number: GPIO9
       mode: 
         input: true
         pullup: true

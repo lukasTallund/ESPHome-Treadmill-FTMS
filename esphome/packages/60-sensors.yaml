@@ -885,13 +885,13 @@ sensor:
     icon: "mdi:map-marker-distance"
     state_class: measurement
 
-# Raw Treadmill Data — счётчик импульсов энкодера (GPIO16).
+# Raw Treadmill Data — счётчик импульсов энкодера (GPIO13).
 # Считает фронты (rising_edge), фильтр 13 мкс от дребезга.
 # Публикует частоту импульсов (pulses/s) каждые 250 мс.
 # Используется как источник для расчёта скорости.
   - platform: pulse_counter
     pin:
-      number: GPIO16
+      number: GPIO13
       mode:
         input: true
         pullup: true
