@@ -1,0 +1,12 @@
+# Tunable motor-board limits, kept in one place instead of scattered
+# hardcoded numbers across buttons/FTMS/HA-number entities. To try a
+# different limit, change it here only - nothing else needs editing.
+#
+# Current values match the Master T30 manual's own spec (1.0-20 km/h,
+# 0-18% incline); the motor board's real accepted range hasn't been
+# confirmed on hardware yet.
+substitutions:
+  speed_max_kmh: "20.0"       # km/h - HA "Set Speed", FTMS validation (float comparisons)
+  speed_max_tenths: "200"     # same limit, internal tenths-of-km/h unit (target_speed_goal)
+  incline_max_pct: "18.0"     # % - HA "Set Incline", FTMS validation, button guard (float comparisons)
+  incline_max_level: "18"     # same limit, as a plain int for the two integer-typed level/number schemas

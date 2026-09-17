@@ -60,25 +60,25 @@ button:
 
 # Кнопки изменения скорости беговой дорожки
 
-# Speed +0.1 — увеличивает целевую скорость на 0.1 км/ч (если мотор работает и скорость < 20.0 км/ч).
+# Speed +0.1 — увеличивает целевую скорость на 0.1 км/ч (если мотор работает и скорость < 18.0 км/ч).
   - platform: template
     name: "Speed +0.1"
     internal: true
     id: speed_up_button
     on_press:
       - lambda: |-
-          if (id(motor_running) && id(target_speed_goal) < 200) {
+          if (id(motor_running) && id(target_speed_goal) < ${speed_max_tenths}) {
             id(target_speed_goal) += 1;  // +0.1 км/ч
           }
 
-# Speed +0.5 — увеличивает целевую скорость на 0.5 км/ч (если мотор работает и скорость < 20.0 км/ч).
+# Speed +0.5 — увеличивает целевую скорость на 0.5 км/ч (если мотор работает и скорость < 18.0 км/ч).
   - platform: template
     name: "Speed +0.5"
     internal: true
     id: speed_up_button_large
     on_press:
       - lambda: |-
-          if (id(motor_running) && id(target_speed_goal) < 200) {
+          if (id(motor_running) && id(target_speed_goal) < ${speed_max_tenths}) {
             id(target_speed_goal) += 5;  // +0.5 км/ч
           }
 
@@ -111,7 +111,7 @@ button:
 
 # Кнопки изменения наклона беговой дорожки
 
-# Incline +1 — увеличивает наклон на 1% (если мотор работает и новый наклон ≤ 18%).
+# Incline +1 — увеличивает наклон на 1% (если мотор работает и новый наклон ≤ 15%).
   - platform: template
     name: "Incline +1"
     internal: true
@@ -121,7 +121,7 @@ button:
           if (id(motor_running)) {
             float current_incline = id(set_incline).state;
             float new_incline = current_incline + 1.0;
-            if (new_incline <= 18.0) {
+            if (new_incline <= ${incline_max_pct}) {
               id(set_incline).publish_state(new_incline);
               ESP_LOGI("treadmill", "Incline increased to %.1f%%", new_incline);
             }

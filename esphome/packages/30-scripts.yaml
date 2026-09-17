@@ -928,9 +928,9 @@ script:
           pulse_out_of_zone_count++;
           if (pulse_out_of_zone_count >= 2) { // ждём 2 проверки подряд (~20 сек)
             if (hr < id(target_heart_rate_min)) {
-              if (hr < id(target_heart_rate_min) - 10 && id(target_speed_goal) < 200)
+              if (hr < id(target_heart_rate_min) - 10 && id(target_speed_goal) < ${speed_max_tenths})
                 id(target_speed_goal) += 5; // +0.5 км/ч (если пульс сильно ниже зоны >10 bpm)
-              else if (id(target_speed_goal) < 200)
+              else if (id(target_speed_goal) < ${speed_max_tenths})
                 id(target_speed_goal) += 1; // +0.1 км/ч (если пульс чуть ниже зоны)
             } else {
               if (hr > id(target_heart_rate_max) + 10 && id(target_speed_goal) > 6)
@@ -976,11 +976,11 @@ script:
           if (elapsed <= 20000) {
             if (hr < id(target_heart_rate_min)) {
               int diff = (int)(id(target_heart_rate_min) - hr);
-              if (diff >= 20 && id(target_speed_goal) < 200)
+              if (diff >= 20 && id(target_speed_goal) < ${speed_max_tenths})
                 id(target_speed_goal) += 10; // +1.0 км/ч
-              else if (diff >= 6 && id(target_speed_goal) < 200)
+              else if (diff >= 6 && id(target_speed_goal) < ${speed_max_tenths})
                 id(target_speed_goal) += 5;  // +0.5 км/ч
-              else if (diff >= 1 && id(target_speed_goal) < 200)
+              else if (diff >= 1 && id(target_speed_goal) < ${speed_max_tenths})
                 id(target_speed_goal) += 1;  // +0.1 км/ч
             }
             return;
@@ -996,11 +996,11 @@ script:
           if (pulse_out_of_zone_count >= 2) {
             if (hr < id(target_heart_rate_min)) {
               int diff = (int)(id(target_heart_rate_min) - hr);
-              if (diff >= 20 && id(target_speed_goal) < 200)
+              if (diff >= 20 && id(target_speed_goal) < ${speed_max_tenths})
                 id(target_speed_goal) += 10; // +1.0 км/ч
-              else if (diff >= 6 && id(target_speed_goal) < 200)
+              else if (diff >= 6 && id(target_speed_goal) < ${speed_max_tenths})
                 id(target_speed_goal) += 5;  // +0.5 км/ч
-              else if (diff >= 1 && id(target_speed_goal) < 200)
+              else if (diff >= 1 && id(target_speed_goal) < ${speed_max_tenths})
                 id(target_speed_goal) += 1;  // +0.1 км/ч
             } else {
               int diff = (int)(hr - id(target_heart_rate_max));
@@ -2020,7 +2020,7 @@ script:
 #    - Задняя зона (in_back) → замедление (первый шаг сразу, далее каждые ≥1 сек).
 #    - Средняя зона → удержание скорости, сброс таймера.
 # 4. Шаг изменения скорости задаётся параметром free_run_step (например, 0.1–0.5 км/ч).
-# 5. Ограничивает скорость в диапазоне 0.6–20.0 км/ч (6–200 в целых значениях).
+# 5. Ограничивает скорость в диапазоне 0.6–18.0 км/ч (6–180 в целых значениях).
 # 6. При изменении цели обновляет target_speed_goal и публикует новое значение set_speed.
   - id: free_running_logic
     mode: single
@@ -2099,7 +2099,7 @@ script:
 
           // Ограничения скорости
           if (goal_int < 6) goal_int = 6;
-          if (goal_int > 200) goal_int = 200;
+          if (goal_int > ${speed_max_tenths}) goal_int = ${speed_max_tenths};
 
           if (changed && goal_int != id(target_speed_goal)) {
             id(target_speed_goal) = goal_int;

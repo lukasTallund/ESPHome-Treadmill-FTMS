@@ -1,6 +1,7 @@
 # Smart treadmill base configuration.
 # Functional logic is grouped into packages below.
 packages:
+  05_limits: !include packages/05-limits.yaml
   10_hardware: !include packages/10-hardware.yaml
   20_globals: !include packages/20-globals.yaml
   30_scripts: !include packages/30-scripts.yaml

@@ -261,7 +261,7 @@ number:
     name: "Treadmill Maximum Incline Level"
     id: treadmill_max_incline_level
     min_value: 1
-    max_value: 18
+    max_value: ${incline_max_level}
     step: 1
     mode: box
     entity_category: config
@@ -428,13 +428,13 @@ number:
           ESP_LOGI("Nextion", "Sending weight to age.n_weight: %d kg", (int)id(weight_kg).state);
           //ESP_LOGI("Settings", "Weight updated to: %d kg", (int)id(weight_kg).state);
 
-# Set Speed — целевая скорость (0.6–20.0 км/ч).
+# Set Speed — целевая скорость (0.6–18.0 км/ч).
 # При изменении обновляет goal и отправляет уведомление FTMS (Target Speed Changed).
   - platform: template
     name: "Set Speed"
     id: set_speed
     min_value: 0.6
-    max_value: 20.0
+    max_value: ${speed_max_kmh}
     step: 0.1
     unit_of_measurement: "km/h"
     icon: "mdi:speedometer"
@@ -467,13 +467,13 @@ number:
           }
 
         
-# Set Incline — целевой наклон (0–18%).
+# Set Incline — целевой наклон (0–15%).
 # При изменении обновляет goal и отправляет уведомление FTMS (Target Incline Changed).
   - platform: template
     name: "Set Incline"
     id: set_incline
     min_value: 0
-    max_value: 18
+    max_value: ${incline_max_level}
     step: 1
     unit_of_measurement: "%"
     icon: "mdi:angle-acute"

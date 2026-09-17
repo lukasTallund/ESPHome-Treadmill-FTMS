@@ -192,14 +192,14 @@ interval:
                   }
 
                   if (new_target_kph < 0.6f)  new_target_kph = 0.6f;
-                  if (new_target_kph > 20.0f) new_target_kph = 20.0f;
+                  if (new_target_kph > ${speed_max_kmh}f) new_target_kph = ${speed_max_kmh}f;
                   id(target_speed_goal_float) = new_target_kph;
                 }
 
                 // --- Шаг 3: отправка команды мотору ---
                 int cmd_target = (int)roundf(new_target_kph * 10.0f);
                 if (cmd_target < 6)   cmd_target = 6;
-                if (cmd_target > 200) cmd_target = 200;
+                if (cmd_target > ${speed_max_tenths}) cmd_target = ${speed_max_tenths};
 
                 char speed_buffer[13];
                 snprintf(speed_buffer, sizeof(speed_buffer), "[SETSPD:%03d]", cmd_target);
@@ -338,7 +338,7 @@ interval:
 
                   // Если пульс есть, он ниже зоны 1, и прошло хотя бы 10 секунд с последнего изменения
                   if (!isnan(heart_rate) && heart_rate < zone_1_min && (now - last_adjust_ms) >= 10000) {
-                    if (id(target_speed_goal) < 200) {
+                    if (id(target_speed_goal) < ${speed_max_tenths}) {
                       id(target_speed_goal) += 5;   // Увеличиваем скорость на 0.5 км/ч
                       last_adjust_ms = now;         // Запоминаем время изменения
                       ESP_LOGI("Interval", "Warm-up: Waiting for pulse, increase speed by 0.5, target_speed_goal=%d", id(target_speed_goal));

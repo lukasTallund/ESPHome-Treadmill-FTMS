@@ -206,15 +206,15 @@ ble_client:
 #    - 2ACC  Fitness Machine Feature   → фиксированные возможности (поддержка скорости, дистанции, наклона, пульса)
 #    - 2ADA  Fitness Machine Status    → уведомления о смене цели (Target Speed/Incline Changed и др.)
 #    - 2AD3  Training Status           → текущее состояние тренировки (Idle, Running, Paused, Finished)
-#    - 2AD4  Supported Speed Range     → 0.0 – 20.0 км/ч, шаг 0.1 км/ч
-#    - 2AD5  Supported Inclination     → 0.0 – 18.0 %, шаг 1.0 %
+#    - 2AD4  Supported Speed Range     → 0.0 – 18.0 км/ч, шаг 0.1 км/ч
+#    - 2AD5  Supported Inclination     → 0.0 – 15.0 %, шаг 1.0 %
 #    - 2AD9  Fitness Machine Control Point → основная точка управления
 #
 # 4. Обработка команд Control Point (2AD9) — полностью соответствует спецификации FTMS v1.0:
 #    - 0x00 Request Control          → всегда Success
 #    - 0x07 Start / Resume           → запускает выбранную программу или ручной режим (если не стоит manual_stop)
 #    - 0x08 Stop / Pause             → вызывает stop_program
-#    - 0x02 Set Target Speed         → принимает значение в 0.01 км/ч (0.6–20.0), сохраняет в target_speed_goal
+#    - 0x02 Set Target Speed         → принимает значение в 0.01 км/ч (0.6–18.0), сохраняет в target_speed_goal
 #                                        и отправляет уведомление 0x05 (Target Speed Changed)
 #    - 0x03 Set Target Incline       → принимает значение в 0.1 %, с защитой от спама (<500 мс)
 #                                        и отправляет уведомление 0x06 (Target Incline Changed)
@@ -349,14 +349,16 @@ esp32_ble_server:
           id: supported_speed_range
           read: true
           value: !lambda |-
-            // min: 0.6 км/ч (60), max: 20.0 км/ч (2000), increment: 0.1 км/ч (10)
-            return std::vector<uint8_t>{0x3C, 0x00, 0xD0, 0x07, 0x0A, 0x00};
+            // min: 0.6 км/ч (60), max: 18.0 км/ч (1800), increment: 0.1 км/ч (10)
+            uint16_t max_raw = (uint16_t) (${speed_max_kmh}f * 100.0f);
+            return std::vector<uint8_t>{0x3C, 0x00, (uint8_t) (max_raw & 0xFF), (uint8_t) (max_raw >> 8), 0x0A, 0x00};
         - uuid: "2AD5"  # Supported Inclination Range
           id: supported_incline_range
           read: true
           value: !lambda |-
-            // min: 0.0% (0), max: 18.0% (180), increment: 1.0% (10)
-            return std::vector<uint8_t>{0x00, 0x00, 0xB4, 0x00, 0x0A, 0x00};
+            // min: 0.0% (0), max: 15.0% (150), increment: 1.0% (10)
+            uint16_t max_raw = (uint16_t) (${incline_max_pct}f * 10.0f);
+            return std::vector<uint8_t>{0x00, 0x00, (uint8_t) (max_raw & 0xFF), (uint8_t) (max_raw >> 8), 0x0A, 0x00};
         - uuid: "2AD9"  # Fitness Machine Control Point
           id: ftms_control_point_char
           write: true
@@ -431,7 +433,7 @@ esp32_ble_server:
                       result_code = 0x03;  // Invalid Parameter
                     } else {
                       float kmh = (x[1] | (x[2] << 8)) / 100.0f;
-                      if (kmh >= 0.6f && kmh <= 20.0f) {
+                      if (kmh >= 0.6f && kmh <= ${speed_max_kmh}f) {
                         id(target_speed_goal) = (int) lroundf(kmh * 10.0f);
                         result_code = 0x01;
 
@@ -453,7 +455,7 @@ esp32_ble_server:
                     } else {
                       float incline =
                           static_cast<int16_t>(x[1] | (x[2] << 8)) / 10.0f;
-                      if (incline >= 0.0f && incline <= 18.0f) {
+                      if (incline >= 0.0f && incline <= ${incline_max_pct}f) {
                         id(set_incline).publish_state(incline);
                         id(target_incline_goal) = (int) lroundf(incline * 10.0f);
                         id(target_incline) = id(target_incline_goal);
