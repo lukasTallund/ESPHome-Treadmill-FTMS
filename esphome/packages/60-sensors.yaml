@@ -658,30 +658,30 @@ sensor:
     icon: "mdi:run"
 
     lambda: |-
-      // 1. Во время паузы - имитация плавного торможения (косметика, не
-      // измерение). Реальный [SETSPD:000] уже отправлен один раз в
-      // pause_training, дорожка тормозит сама по себе, обратной связи по
-      // скорости от неё нет - поэтому это только для приятной анимации.
-      static float fake_pause_speed = -1.0f;  // -1 = не в процессе показа
+      // 1. While paused - simulate a smooth deceleration (cosmetic only,
+      // not a real measurement). The actual [SETSPD:000] was already sent
+      // once in pause_training; the belt coasts down on its own and there
+      // is no speed feedback from it, so this is purely for a nice animation.
+      static float fake_pause_speed = -1.0f;  // -1 = not currently displaying a decel
       if (id(pause_active)) {
         if (fake_pause_speed < 0.0f) {
-          fake_pause_speed = id(target_speed) / 10.0f;  // старт с последней рампы
+          fake_pause_speed = id(target_speed) / 10.0f;  // start from the last ramp value
         } else if (fake_pause_speed > 0.0f) {
-          fake_pause_speed -= 0.5f;  // условные 0.5 км/ч в секунду
+          fake_pause_speed -= 0.5f;  // roughly 0.5 km/h per second
           if (fake_pause_speed < 0.0f) fake_pause_speed = 0.0f;
         }
         return fake_pause_speed;
       }
-      fake_pause_speed = -1.0f;  // сброс, чтобы следующая пауза начиналась заново
+      fake_pause_speed = -1.0f;  // reset so the next pause starts fresh
 
-      // 2. Если мотор работает — показываем реальную (рампующуюся) скорость,
-      // а не конечную цель - тот же target_speed, который использует
-      // ускорение в 40-intervals.yaml для отправки [SETSPD:XXX].
+      // 2. If the motor is running — show the real (ramping) speed, not the
+      // final target - the same target_speed used by the acceleration logic
+      // in 40-intervals.yaml to send [SETSPD:XXX].
       if (id(motor_running)) {
         return id(target_speed) / 10.0;
       }
 
-      // 3. Если мотор выключен — тоже 0.0
+      // 3. If the motor is off — 0.0 as well
       return 0.0;
 
     on_value:
@@ -690,21 +690,21 @@ sensor:
           static float last_nextion = -100.0f;
           float current = id(treadmill_speed_goal_sensor).state;
 
-          // Синхронизация ползунка в Home Assistant - используем настоящую
-          // цель (target_speed_goal), а не рампу. set_speed сам пишет
-          // обратно в target_speed_goal при изменении (90-controls.yaml) -
-          // если публиковать сюда рампующееся значение, оно тут же
-          // перезаписывает цель текущей (ещё не достигнутой) позицией
-          // рампы, и разгон замирает после первого же тика.
+          // Sync the Home Assistant slider using the real target
+          // (target_speed_goal), not the ramp. set_speed writes back into
+          // target_speed_goal itself on change (90-controls.yaml) - if the
+          // ramping value were published here instead, it would immediately
+          // overwrite the target with the ramp's current (not-yet-reached)
+          // position, freezing acceleration after the very first tick.
           float goal_kph = id(target_speed_goal) / 10.0f;
           if (fabs(goal_kph - last_ha) >= 0.05f) {
             last_ha = goal_kph;
             id(set_speed).publish_state(goal_kph);
           }
 
-          // Обновляем Nextion только на странице скорости. last_nextion -
-          // отдельный флаг, поэтому если страница не была активна в момент
-          // изменения, обновление всё равно придёт, как только на неё зайдут.
+          // Only update the Nextion display on the speed page. last_nextion
+          // is a separate flag, so if the page wasn't active when the value
+          // changed, the update still arrives as soon as the page opens.
           if (id(current_page) == 1 && fabs(current - last_nextion) >= 0.05f) {
             last_nextion = current;
             char speed_str[10];
