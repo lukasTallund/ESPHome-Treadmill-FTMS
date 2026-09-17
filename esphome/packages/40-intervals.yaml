@@ -216,23 +216,30 @@ interval:
 # 1. Интервал 700 мс — каждые ~0.7 секунды отправляется команда по UART.
 # 2. Если мотор работает:
 #    - Отправляется текущая целевая величина наклона (target_incline_goal) в формате [SETINC:XXX].
-# 3. Если мотор выключен, но фактический наклон (set_incline) всё ещё > 0:
+# 3. Если мотор выключен, но последняя реально отправленная команда наклона была не 0:
 #    - Отправляется команда сброса наклона в 0 ([SETINC:000]).
 # 4. Таким образом, блок поддерживает актуальный наклон во время работы и автоматически возвращает дорожку в горизонтальное положение при остановке.
+#    N.B: treadmill_incline_feedback всегда 0 (этот мотор-борд никогда не шлёт обратную связь по
+#    наклону), поэтому вместо неё используется собственный static-трекер последней отправленной
+#    команды. Стартует с -1 (не 0!), чтобы после перезагрузки, если дорожка физически осталась
+#    наклонённой, первый же тик при выключенном моторе всё равно отправил сброс в 0.
   - interval: 700ms
     then:
       - lambda: |-
+          static int last_sent_incline = -1;  // -1 = ещё не знаем, что физически стоит на дорожке
           char incline_buffer[13];
           // Если двигатель работает, отправляем текущую цель наклона
           if (id(motor_running)) {
             snprintf(incline_buffer, sizeof(incline_buffer), "[SETINC:%03d]", id(target_incline_goal));
             id(uart_send)->execute(incline_buffer);
+            last_sent_incline = id(target_incline_goal);
             //ESP_LOGI("treadmill", "Incline sent (running): %s", incline_buffer);
           }
-          // Если двигатель выключен, но наклон ещё не 0, возвращаем в 0
-          else if (id(treadmill_incline_feedback) > 5) {  // 5 = 0.5%
+          // Если двигатель выключен, но последняя отправленная команда наклона была не 0, возвращаем в 0
+          else if (last_sent_incline != 0) {
             snprintf(incline_buffer, sizeof(incline_buffer), "[SETINC:000]");
             id(uart_send)->execute(incline_buffer);
+            last_sent_incline = 0;
             ESP_LOGI("treadmill", "Incline sent (reset to 0): %s", incline_buffer);
           }
 
