@@ -42,6 +42,23 @@ script:
           id(uart_bus).write_str(cmd.c_str());
       - delay: 50ms
 
+  # Fires the keypad Start/Stop long-press action the moment the hold
+  # threshold is reached, instead of waiting for the button to be released.
+  - id: keypad_start_stop_long_press
+    mode: single
+    then:
+      - delay: 600ms
+      - lambda: |-
+          if (id(pause_active)) {
+            id(stop_program).execute();
+          } else if (id(motor_running)) {
+            id(pause_training).execute();
+          } else if (id(program_select).current_option() != "None") {
+            id(start_program).execute();
+          } else {
+            id(start_manual).execute();
+          }
+
 
 
   # pause_training — ставит тренировку на паузу:

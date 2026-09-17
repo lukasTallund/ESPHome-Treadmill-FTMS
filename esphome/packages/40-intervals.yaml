@@ -232,8 +232,10 @@ interval:
           if (id(motor_running)) {
             snprintf(incline_buffer, sizeof(incline_buffer), "[SETINC:%03d]", id(target_incline_goal));
             id(uart_send)->execute(incline_buffer);
-            last_sent_incline = id(target_incline_goal);
-            //ESP_LOGI("treadmill", "Incline sent (running): %s", incline_buffer);
+            if (id(target_incline_goal) != last_sent_incline) {
+              last_sent_incline = id(target_incline_goal);
+              ESP_LOGI("treadmill", "Incline sent (running): %s", incline_buffer);
+            }
           }
           // If motor is off but the last incline command sent was not 0, reset to 0
           else if (last_sent_incline != 0) {

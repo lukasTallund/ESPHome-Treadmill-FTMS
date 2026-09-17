@@ -25,35 +25,31 @@ binary_sensor:
     entity_category: diagnostic
     row: 0
     col: 1
-    on_click:
-      # Short tap: halt without ending the session (same as pause/resume),
-      # never a full stop_program reset.
-      - max_length: 600ms
-        then:
-          - lambda: |-
-              if (id(motor_running)) {
-                id(pause_training).execute();
-              } else if (id(pause_active)) {
-                id(resume_training).execute();
-              } else if (id(program_select).current_option() != "None") {
-                id(start_program).execute();
-              } else {
-                id(start_manual).execute();
-              }
-      # Long tap while paused: end the session instead of resuming it.
-      - min_length: 600ms
-        max_length: 10s
-        then:
-          - lambda: |-
-              if (id(pause_active)) {
-                id(stop_program).execute();
-              } else if (id(motor_running)) {
-                id(pause_training).execute();
-              } else if (id(program_select).current_option() != "None") {
-                id(start_program).execute();
-              } else {
-                id(start_manual).execute();
-              }
+    # Long-press fires keypad_start_stop_long_press 600ms into the hold,
+    # while the button is still down - it doesn't wait for release.
+    on_press:
+      - script.execute: keypad_start_stop_long_press
+    on_release:
+      # If the timer script is still waiting, this was a short tap: cancel
+      # it and run the short-tap action instead. If it already fired (the
+      # long-press branch), do nothing more here.
+      - if:
+          condition:
+            script.is_running: keypad_start_stop_long_press
+          then:
+            - script.stop: keypad_start_stop_long_press
+            # Short tap: halt without ending the session (same as pause/resume),
+            # never a full stop_program reset.
+            - lambda: |-
+                if (id(motor_running)) {
+                  id(pause_training).execute();
+                } else if (id(pause_active)) {
+                  id(resume_training).execute();
+                } else if (id(program_select).current_option() != "None") {
+                  id(start_program).execute();
+                } else {
+                  id(start_manual).execute();
+                }
 
   - platform: matrix_keypad
     name: "Settings Button"
