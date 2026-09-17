@@ -59,6 +59,53 @@ script:
             id(start_manual).execute();
           }
 
+  # Keypad Speed/Incline Up/Down: one step immediately on press, then
+  # auto-repeat every 150ms once held past 400ms - matches the original
+  # Master T30 console's "hold to change continuously" behavior.
+  - id: keypad_speed_up_repeat
+    mode: restart
+    then:
+      - delay: 400ms
+      - while:
+          condition:
+            lambda: 'return true;'
+          then:
+            - button.press: speed_up_button_large
+            - delay: 150ms
+
+  - id: keypad_speed_down_repeat
+    mode: restart
+    then:
+      - delay: 400ms
+      - while:
+          condition:
+            lambda: 'return true;'
+          then:
+            - button.press: speed_down_button_large
+            - delay: 150ms
+
+  - id: keypad_incline_up_repeat
+    mode: restart
+    then:
+      - delay: 400ms
+      - while:
+          condition:
+            lambda: 'return true;'
+          then:
+            - button.press: incline_up_button
+            - delay: 150ms
+
+  - id: keypad_incline_down_repeat
+    mode: restart
+    then:
+      - delay: 400ms
+      - while:
+          condition:
+            lambda: 'return true;'
+          then:
+            - button.press: incline_down_button
+            - delay: 150ms
+
 
 
   # pause_training — ставит тренировку на паузу:

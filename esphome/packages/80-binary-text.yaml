@@ -19,6 +19,9 @@ binary_sensor:
     col: 0
     on_press:
       - button.press: speed_up_button_large
+      - script.execute: keypad_speed_up_repeat
+    on_release:
+      - script.stop: keypad_speed_up_repeat
 
   - platform: matrix_keypad
     name: "Start/Stop Button"
@@ -77,6 +80,9 @@ binary_sensor:
     col: 3
     on_press:
       - button.press: speed_down_button_large
+      - script.execute: keypad_speed_down_repeat
+    on_release:
+      - script.stop: keypad_speed_down_repeat
 
   - platform: matrix_keypad
     name: "Incline Preset 3 Button"
@@ -144,6 +150,9 @@ binary_sensor:
     col: 3
     on_press:
       - button.press: incline_up_button
+      - script.execute: keypad_incline_up_repeat
+    on_release:
+      - script.stop: keypad_incline_up_repeat
 
   - platform: matrix_keypad
     name: "Speed Preset 6 Button"
@@ -160,9 +169,9 @@ binary_sensor:
     col: 3
     on_press:
       - button.press: incline_down_button
-    filters:
-      - delayed_on: 50ms
-      - delayed_off: 50ms
+      - script.execute: keypad_incline_down_repeat
+    on_release:
+      - script.stop: keypad_incline_down_repeat
 
 
   - platform: nextion
