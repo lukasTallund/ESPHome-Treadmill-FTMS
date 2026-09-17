@@ -261,7 +261,7 @@ number:
     name: "Treadmill Maximum Incline Level"
     id: treadmill_max_incline_level
     min_value: 1
-    max_value: 15
+    max_value: 18
     step: 1
     mode: box
     entity_category: config
@@ -467,13 +467,13 @@ number:
           }
 
         
-# Set Incline — целевой наклон (0–15%).
+# Set Incline — целевой наклон (0–18%).
 # При изменении обновляет goal и отправляет уведомление FTMS (Target Incline Changed).
   - platform: template
     name: "Set Incline"
     id: set_incline
     min_value: 0
-    max_value: 15
+    max_value: 18
     step: 1
     unit_of_measurement: "%"
     icon: "mdi:angle-acute"

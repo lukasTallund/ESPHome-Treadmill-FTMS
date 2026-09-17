@@ -111,7 +111,7 @@ button:
 
 # Кнопки изменения наклона беговой дорожки
 
-# Incline +1 — увеличивает наклон на 1% (если мотор работает и новый наклон ≤ 15%).
+# Incline +1 — увеличивает наклон на 1% (если мотор работает и новый наклон ≤ 18%).
   - platform: template
     name: "Incline +1"
     internal: true
@@ -121,7 +121,7 @@ button:
           if (id(motor_running)) {
             float current_incline = id(set_incline).state;
             float new_incline = current_incline + 1.0;
-            if (new_incline <= 15.0) {
+            if (new_incline <= 18.0) {
               id(set_incline).publish_state(new_incline);
               ESP_LOGI("treadmill", "Incline increased to %.1f%%", new_incline);
             }
