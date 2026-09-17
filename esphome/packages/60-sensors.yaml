@@ -658,14 +658,27 @@ sensor:
     icon: "mdi:run"
 
     lambda: |-
-      // 1. Во время паузы всегда показываем 0.0
+      // 1. Во время паузы - имитация плавного торможения (косметика, не
+      // измерение). Реальный [SETSPD:000] уже отправлен один раз в
+      // pause_training, дорожка тормозит сама по себе, обратной связи по
+      // скорости от неё нет - поэтому это только для приятной анимации.
+      static float fake_pause_speed = -1.0f;  // -1 = не в процессе показа
       if (id(pause_active)) {
-        return 0.0;
+        if (fake_pause_speed < 0.0f) {
+          fake_pause_speed = id(target_speed) / 10.0f;  // старт с последней рампы
+        } else if (fake_pause_speed > 0.0f) {
+          fake_pause_speed -= 0.5f;  // условные 0.5 км/ч в секунду
+          if (fake_pause_speed < 0.0f) fake_pause_speed = 0.0f;
+        }
+        return fake_pause_speed;
       }
+      fake_pause_speed = -1.0f;  // сброс, чтобы следующая пауза начиналась заново
 
-      // 2. Если мотор работает — показываем целевую скорость
+      // 2. Если мотор работает — показываем реальную (рампующуюся) скорость,
+      // а не конечную цель - тот же target_speed, который использует
+      // ускорение в 40-intervals.yaml для отправки [SETSPD:XXX].
       if (id(motor_running)) {
-        return id(target_speed_goal) / 10.0;
+        return id(target_speed) / 10.0;
       }
 
       // 3. Если мотор выключен — тоже 0.0
@@ -673,23 +686,31 @@ sensor:
 
     on_value:
       - lambda: |-
-          static float last_sent = -100.0f;
+          static float last_ha = -100.0f;
+          static float last_nextion = -100.0f;
           float current = id(treadmill_speed_goal_sensor).state;
 
-          // Обновляем только при изменении ≥ 0.05 км/ч
-          if (fabs(current - last_sent) >= 0.05f) {
-            last_sent = current;
+          // Синхронизация ползунка в Home Assistant - используем настоящую
+          // цель (target_speed_goal), а не рампу. set_speed сам пишет
+          // обратно в target_speed_goal при изменении (90-controls.yaml) -
+          // если публиковать сюда рампующееся значение, оно тут же
+          // перезаписывает цель текущей (ещё не достигнутой) позицией
+          // рампы, и разгон замирает после первого же тика.
+          float goal_kph = id(target_speed_goal) / 10.0f;
+          if (fabs(goal_kph - last_ha) >= 0.05f) {
+            last_ha = goal_kph;
+            id(set_speed).publish_state(goal_kph);
+          }
 
-            // Обновляем Nextion только на странице скорости
-            if (id(current_page) == 1) {
-              char speed_str[10];
-              sprintf(speed_str, "%.1f", current);
-              id(display_nextion).set_component_text("t1", speed_str);
-              ESP_LOGD("Nextion", "Отправка команды на дисплей - скорость");
-            }
-
-            // Синхронизация ползунка
-            id(set_speed).publish_state(current);
+          // Обновляем Nextion только на странице скорости. last_nextion -
+          // отдельный флаг, поэтому если страница не была активна в момент
+          // изменения, обновление всё равно придёт, как только на неё зайдут.
+          if (id(current_page) == 1 && fabs(current - last_nextion) >= 0.05f) {
+            last_nextion = current;
+            char speed_str[10];
+            sprintf(speed_str, "%.1f", current);
+            id(display_nextion).set_component_text("t1", speed_str);
+            ESP_LOGD("Nextion", "Отправка команды на дисплей - скорость");
           }
 # Treadmill Incline — отображает целевой наклон дорожки (%).
 # Значение берётся из target_incline (деление на 10).
