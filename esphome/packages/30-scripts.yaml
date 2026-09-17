@@ -307,6 +307,14 @@ script:
           id(motor_running) = true;
           id(manual_stop) = false;
 
+          // Belt-and-braces incline reset on a fresh start: normally
+          // already 0 here (stop_program clears it, nothing else sets
+          // it), and the 700ms interval sends it continuously once
+          // motor_running is true anyway - but send it explicitly too,
+          // in case the motor board only re-homes incline while running.
+          id(target_incline_goal) = 0;
+          id(uart_send)->execute("[SETINC:000]");
+
           // Если цель ещё не задана — ставим минимальную (2.5 км/ч = 25)
           if (id(target_speed_goal) == 0) {
             id(target_speed_goal) = 25;
@@ -373,6 +381,10 @@ script:
       - lambda: |-
           id(motor_running) = true;
           id(manual_stop) = false;
+
+          // Belt-and-braces incline reset on a fresh start - see start_manual.
+          id(target_incline_goal) = 0;
+          id(uart_send)->execute("[SETINC:000]");
 
           // Сохраняем дату/время начала тренировки
           auto now = id(sntp_time).now();
