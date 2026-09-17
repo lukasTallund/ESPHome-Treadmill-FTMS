@@ -1,0 +1,56 @@
+# Sends periodic treadmill telemetry to a second, physically adjacent
+# ESP32-S3 running TreadLink, over a dedicated UART link.
+#
+# Why: TreadLink was running BLE central (reading our FTMS server) and BLE
+# peripheral (broadcasting RSC to a Garmin watch) plus WiFi at the same
+# time on one radio. Reconnect attempts on the central side contended for
+# radio time with the already-active Garmin link and crashed TreadLink
+# (stack overflow after repeated failed BLE connections). This UART link
+# lets TreadLink drop the BLE-central role entirely.
+#
+# TX only for now (phase 1, telemetry out). RX is wired for a possible
+# future command channel (Zwift-style control relayed from TreadLink) but
+# nothing reads it yet - see discussion before adding a phase 2 parser,
+# since that would introduce a second command source alongside our own
+# BLE FTMS Control Point with no arbitration between them.
+uart:
+  - id: uart_treadlink
+    tx_pin: GPIO14
+    rx_pin: GPIO21
+    baud_rate: 115200
+
+# Frame: [TM:<speed_001kmh 5-digit>:<incline_01pct signed 4-char>:<distance_m 5-digit>:<flags 2-hex>]\n
+# Values mirror exactly what send_treadmill_data (30-scripts.yaml) already
+# sends to Zwift over BLE FTMS, so the Garmin-via-TreadLink view matches
+# the Zwift view instead of using a second, possibly-inconsistent source
+# (e.g. the noisier FC-33-derived actual speed).
+interval:
+  - interval: 700ms
+    then:
+      - lambda: |-
+          float speed_kph = id(treadmill_speed_goal_sensor).state;
+          float incline = id(treadmill_incline_goal_sensor).state;
+          float distance_km = id(treadmill_distance_km).state;
+
+          if (isnan(speed_kph)) speed_kph = 0.0f;
+          if (isnan(incline)) incline = 0.0f;
+          if (isnan(distance_km)) distance_km = 0.0f;
+
+          int speed_001kmh = (int) lroundf(speed_kph * 100.0f);
+          if (speed_001kmh < 0) speed_001kmh = 0;
+          if (speed_001kmh > 99999) speed_001kmh = 99999;
+
+          int incline_01pct = (int) lroundf(incline * 10.0f);
+          if (incline_01pct < -999) incline_01pct = -999;
+          if (incline_01pct > 9999) incline_01pct = 9999;
+
+          int distance_m = (int) lroundf(distance_km * 1000.0f);
+          if (distance_m < 0) distance_m = 0;
+          if (distance_m > 99999) distance_m = 99999;
+
+          uint8_t flags = 0x03;  // bit0=has_incline, bit1=has_distance
+
+          char frame[40];
+          snprintf(frame, sizeof(frame), "[TM:%05d:%04d:%05d:%02X]\n",
+                   speed_001kmh, incline_01pct, distance_m, flags);
+          id(uart_treadlink).write_str(frame);
