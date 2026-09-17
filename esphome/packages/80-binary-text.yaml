@@ -9,8 +9,8 @@ binary_sensor:
       return id(treadmill_speed_goal_sensor).state > 0.0;
 
 
-# Original treadmill button matrix. Rows: gul(0)/orange(1)/grön(2)/blå(3).
-# Columns: svart(0)/vit(1)/grå(2)/lila(3). See matrix_keypad: in
+# Original treadmill button matrix. Rows: yellow(0)/orange(1)/green(2)/blue(3).
+# Columns: black(0)/white(1)/gray(2)/purple(3). See matrix_keypad: in
 # 10-hardware.yaml. row2,col0 / row3,col0 / row3,col1 are unwired positions.
   - platform: matrix_keypad
     name: "Speed Up Button"

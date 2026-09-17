@@ -21,15 +21,15 @@ matrix_keypad:
   # press, making the +0.5 speed step feel inconsistent/"nonlinear".
   debounce_time: 50  # milliseconds (plain int, not a time-string)
   rows:
-    - pin: GPIO9   # gul
+    - pin: GPIO9   # yellow
     - pin: GPIO10  # orange
-    - pin: GPIO8   # grön
-    - pin: GPIO7   # blå
+    - pin: GPIO8   # green
+    - pin: GPIO7   # blue
   columns:
-    - pin: GPIO14  # svart
-    - pin: GPIO13  # vit
-    - pin: GPIO5   # grå
-    - pin: GPIO6   # lila
+    - pin: GPIO14  # black
+    - pin: GPIO13  # white
+    - pin: GPIO5   # gray
+    - pin: GPIO6   # purple
 
 uart:
   # --- UART 0: дисплей Nextion ---
