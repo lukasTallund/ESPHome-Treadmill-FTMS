@@ -428,13 +428,13 @@ number:
           ESP_LOGI("Nextion", "Sending weight to age.n_weight: %d kg", (int)id(weight_kg).state);
           //ESP_LOGI("Settings", "Weight updated to: %d kg", (int)id(weight_kg).state);
 
-# Set Speed — целевая скорость (0.6–18.0 км/ч).
+# Set Speed — целевая скорость (0.6–20.0 км/ч).
 # При изменении обновляет goal и отправляет уведомление FTMS (Target Speed Changed).
   - platform: template
     name: "Set Speed"
     id: set_speed
     min_value: 0.6
-    max_value: 18.0
+    max_value: 20.0
     step: 0.1
     unit_of_measurement: "km/h"
     icon: "mdi:speedometer"
@@ -448,7 +448,7 @@ number:
           float speed = x;
           int target = static_cast<int>(speed * 10);  // десятые км/ч
           if (target < 6 && target != 0) target = 6;
-          if (target > 180) target = 180;
+          if (target > 200) target = 200;
 
           if (id(target_speed_goal) != target) {
             id(target_speed_goal) = target;

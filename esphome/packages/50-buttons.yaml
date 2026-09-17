@@ -60,25 +60,25 @@ button:
 
 # Кнопки изменения скорости беговой дорожки
 
-# Speed +0.1 — увеличивает целевую скорость на 0.1 км/ч (если мотор работает и скорость < 18.0 км/ч).
+# Speed +0.1 — увеличивает целевую скорость на 0.1 км/ч (если мотор работает и скорость < 20.0 км/ч).
   - platform: template
     name: "Speed +0.1"
     internal: true
     id: speed_up_button
     on_press:
       - lambda: |-
-          if (id(motor_running) && id(target_speed_goal) < 180) {
+          if (id(motor_running) && id(target_speed_goal) < 200) {
             id(target_speed_goal) += 1;  // +0.1 км/ч
           }
 
-# Speed +0.5 — увеличивает целевую скорость на 0.5 км/ч (если мотор работает и скорость < 18.0 км/ч).
+# Speed +0.5 — увеличивает целевую скорость на 0.5 км/ч (если мотор работает и скорость < 20.0 км/ч).
   - platform: template
     name: "Speed +0.5"
     internal: true
     id: speed_up_button_large
     on_press:
       - lambda: |-
-          if (id(motor_running) && id(target_speed_goal) < 180) {
+          if (id(motor_running) && id(target_speed_goal) < 200) {
             id(target_speed_goal) += 5;  // +0.5 км/ч
           }
 
