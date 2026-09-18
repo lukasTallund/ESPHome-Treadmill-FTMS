@@ -50,7 +50,19 @@ interval:
 
           uint8_t flags = 0x03;  // bit0=has_incline, bit1=has_distance
 
-          char frame[40];
-          snprintf(frame, sizeof(frame), "[TM:%05d:%04d:%05d:%02X]\n",
+          char frame[38];
+          snprintf(frame, sizeof(frame), "[TM:%05d:%04d:%05d:%02X]",
                    speed_001kmh, incline_01pct, distance_m, flags);
           id(uart_treadlink).write_str(frame);
+          id(uart_treadlink).write_byte('\n');
+
+          // Sent every 700ms regardless; only logged on change (plus once
+          // right after boot) so this confirms the link is alive without
+          // spamming a line every tick.
+          static int last_logged_speed = -1;
+          static bool logged_once = false;
+          if (speed_001kmh != last_logged_speed || !logged_once) {
+            last_logged_speed = speed_001kmh;
+            logged_once = true;
+            ESP_LOGI("TreadLink", "Sent: %s", frame);
+          }
