@@ -10,6 +10,7 @@ packages:
   60_sensors: !include packages/60-sensors.yaml
   70_ble_ftms: !include packages/70-ble-ftms.yaml
   75_treadlink_uart: !include packages/75-treadlink-uart.yaml
+  76_radio_diagnostics: !include packages/76-radio-diagnostics.yaml
   80_binary_text: !include packages/80-binary-text.yaml
   90_controls: !include packages/90-controls.yaml
   95_nextion: !include packages/95-nextion.yaml

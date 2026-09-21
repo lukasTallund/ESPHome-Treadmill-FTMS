@@ -65,6 +65,14 @@ interval:
           id(uart_treadlink).write_str(frame);
           id(uart_treadlink).write_byte('\n');
 
+          // Mirrors esp32-ant's own "frames" received counter, so the two
+          // can be diffed over the same window to see directly whether
+          // any frames are lost in transit, instead of inferring it from
+          // gap times alone.
+          static uint32_t frames_sent = 0;
+          frames_sent++;
+          id(treadlink_frames_sent).publish_state(frames_sent);
+
           // Sent every 700ms regardless; only logged on change (plus once
           // right after boot) so this confirms the link is alive without
           // spamming a line every tick.
@@ -78,10 +86,15 @@ interval:
 
   # Reads esp32-ant's bridge-health diagnostics back on the RX line.
   # Line formats (bracket-delimited, space-separated key=value):
-  #   [ANT speed_kmh=8.50 distance_m=152 frames=42 max_gap_ms=680 stale_events=0]
+  #   [ANT speed_kmh=8.50 distance_m=152 frames=42 max_gap_ms=680 stale_events=0
+  #        broadcast_failures=0 max_loop_us=... ch_status=...]
   #   [ANT WAITING frames=42 max_gap_ms=680 stale_events=0]
   #   [ANT STALE gap_ms=2340 event=1]
   #   [ANT BOOT msg=...] / [ANT BOOT node_start=ok] / [ANT BOOT stride_open=0x00 device=0x5a17]
+  # broadcast_failures/max_loop_us/ch_status are esp32-ant's own ANT+
+  # radio-side health (channel status, broadcast failures, its own
+  # main-loop-time equivalent) - added to rule their side in or out the
+  # same way our own Loop Time sensor rules ours in or out.
   - interval: 200ms
     then:
       - lambda: |-
@@ -107,6 +120,16 @@ interval:
                     if (pos == std::string::npos) return -1;
                     return atoi(content.c_str() + pos + k.size());
                   };
+                  // For non-numeric values (e.g. ch_status may be hex like
+                  // "0x03") - captures up to the next space or end of line.
+                  auto extract_str = [&](const char *key) -> std::string {
+                    std::string k = std::string(key) + "=";
+                    auto pos = content.find(k);
+                    if (pos == std::string::npos) return "";
+                    auto start = pos + k.size();
+                    auto end = content.find(' ', start);
+                    return content.substr(start, end == std::string::npos ? std::string::npos : end - start);
+                  };
 
                   int max_gap = extract_int("max_gap_ms");
                   if (max_gap >= 0) id(ant_max_gap_ms).publish_state(max_gap);
@@ -116,6 +139,15 @@ interval:
 
                   int frames = extract_int("frames");
                   if (frames >= 0) id(ant_frames).publish_state(frames);
+
+                  int broadcast_failures = extract_int("broadcast_failures");
+                  if (broadcast_failures >= 0) id(ant_broadcast_failures).publish_state(broadcast_failures);
+
+                  int max_loop_us = extract_int("max_loop_us");
+                  if (max_loop_us >= 0) id(ant_max_loop_us).publish_state(max_loop_us);
+
+                  std::string ch_status = extract_str("ch_status");
+                  if (!ch_status.empty()) id(ant_channel_status).publish_state(ch_status);
                 }
               }
               buf.clear();
@@ -131,6 +163,12 @@ text_sensor:
   - platform: template
     name: "ANT Bridge Last Line"
     id: ant_last_line
+    icon: "mdi:radio-tower"
+    entity_category: diagnostic
+
+  - platform: template
+    name: "ANT Channel Status"
+    id: ant_channel_status
     icon: "mdi:radio-tower"
     entity_category: diagnostic
 
@@ -158,5 +196,24 @@ sensor:
   - platform: template
     name: "ANT Bridge Frames"
     id: ant_frames
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "TreadLink Frames Sent"
+    id: treadlink_frames_sent
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "ANT Broadcast Failures"
+    id: ant_broadcast_failures
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "ANT Max Loop Time"
+    id: ant_max_loop_us
+    unit_of_measurement: "µs"
     entity_category: diagnostic
     accuracy_decimals: 0

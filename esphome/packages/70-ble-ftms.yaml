@@ -237,6 +237,10 @@ esp32_ble_server:
         tag: KICKR_RUN
         level: INFO
         format: "BLE server client connected"
+    - lambda: |-
+        static uint32_t count = 0;
+        count++;
+        id(ble_connect_count).publish_state(count);
     - globals.set:
         id: ble_client_connected
         value: 'true'

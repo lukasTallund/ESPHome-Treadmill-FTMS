@@ -1,0 +1,33 @@
+# Radio-health diagnostics, added to investigate whether WiFi+BLE radio
+# coexistence on this chip could cause hardware/interrupt-level hiccups
+# (e.g. on the UART peripheral used for the TreadLink/esp32-ant bridge)
+# that wouldn't show up in the Loop Time debug sensor - that one only
+# tracks FreeRTOS task scheduling gaps, not lower-level radio effects.
+# See the esp32-ant dropout investigation.
+#
+# wifi: on_disconnect merges into the wifi: block already defined in
+# config.yaml (separate top-level keys, no override).
+wifi:
+  on_disconnect:
+    - lambda: |-
+        static uint32_t count = 0;
+        count++;
+        id(wifi_disconnect_count).publish_state(count);
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 30s
+    entity_category: diagnostic
+
+  - platform: template
+    name: "WiFi Disconnect Count"
+    id: wifi_disconnect_count
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "BLE Connect Count"
+    id: ble_connect_count
+    entity_category: diagnostic
+    accuracy_decimals: 0
