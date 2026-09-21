@@ -593,7 +593,7 @@ script:
           static int warm_up_time = 0;
           warm_up_time++;
           float heart_rate = id(heart_rate_sensor).state;
-          float zone_1_min = id(max_heart_rate) * 0.5;
+          float zone_1_min = id(hr_zone1_min).state;
 
           // Увеличение скорости на 0.1 км/ч каждые 10 секунд во время разминки
           if (id(control_mode) != 1 && id(remaining_warm_up_time) > 0 &&
@@ -758,7 +758,7 @@ script:
           }
 
           float heart_rate = id(heart_rate_sensor).state;
-          float zone_1_max = id(max_heart_rate) * 0.6;
+          float zone_1_max = id(hr_zone2_min).state;  // top of zone 1 = bottom of zone 2
           float current_speed_kph = id(target_speed_goal) / 10.0;   // работаем через goal
           float target_min_speed = 3.0; //ниже шага не уйдет
 
@@ -1658,8 +1658,14 @@ script:
             id(max_heart_rate) = 209 - (0.7 * age);
           }
           int zone = atoi(id(zone_select).current_option().c_str());                // Получаем номер выбранной зоны пульса
-          id(target_heart_rate_min) = id(max_heart_rate) * (0.5 + (zone - 1) * 0.1); // Вычисляем нижнюю границу зоны
-          id(target_heart_rate_max) = id(max_heart_rate) * (0.6 + (zone - 1) * 0.1); // Вычисляем верхнюю границу зоны
+          if (zone < 1) zone = 1;
+          if (zone > 5) zone = 5;
+          // Границы зон теперь задаются пользователем (HR Zone 1-5 Min), не
+          // процентом от расчётной максимальной ЧСС.
+          float zone_min[5] = {id(hr_zone1_min).state, id(hr_zone2_min).state, id(hr_zone3_min).state,
+                                id(hr_zone4_min).state, id(hr_zone5_min).state};
+          id(target_heart_rate_min) = zone_min[zone - 1];
+          id(target_heart_rate_max) = (zone < 5) ? zone_min[zone] : (zone_min[4] + 20.0f);
           char buffer[100];                                                 // Формируем строку с информацией
           snprintf(buffer, sizeof(buffer), "%s %.0f, HR Zone %d: %.0f–%.0f bpm",
                   id(gender_select).current_option().c_str(), age, zone,

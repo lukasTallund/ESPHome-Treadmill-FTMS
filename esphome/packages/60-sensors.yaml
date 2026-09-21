@@ -993,20 +993,14 @@ sensor:
             return;
           }
 
-          // зоны
-          float max_hr = id(max_heart_rate);
-          float min_zone_1 = max_hr * 0.50;
-          float max_zone_1 = max_hr * 0.60;
-          float max_zone_2 = max_hr * 0.70;
-          float max_zone_3 = max_hr * 0.80;
-          float max_zone_4 = max_hr * 0.90;
-
+          // зоны - границы задаются пользователем (HR Zone 1-5 Min),
+          // не процентом от расчётной максимальной ЧСС.
           int heart_rate_zone = 0;
-          if (hr < min_zone_1) heart_rate_zone = 0;
-          else if (hr < max_zone_1) heart_rate_zone = 1;
-          else if (hr < max_zone_2) heart_rate_zone = 2;
-          else if (hr < max_zone_3) heart_rate_zone = 3;
-          else if (hr < max_zone_4) heart_rate_zone = 4;
+          if (hr < id(hr_zone1_min).state) heart_rate_zone = 0;
+          else if (hr < id(hr_zone2_min).state) heart_rate_zone = 1;
+          else if (hr < id(hr_zone3_min).state) heart_rate_zone = 2;
+          else if (hr < id(hr_zone4_min).state) heart_rate_zone = 3;
+          else if (hr < id(hr_zone5_min).state) heart_rate_zone = 4;
           else heart_rate_zone = 5;
 
           id(current_zone) = heart_rate_zone;

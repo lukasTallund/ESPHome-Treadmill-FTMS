@@ -343,7 +343,7 @@ interval:
                 // Условие: не ручной режим, разминка активна, время разминки вышло,
                 // и текущая скорость совпадает с целевой (т.е. нет других изменений).
                 if (id(control_mode) != 1 && id(warm_up_active) && id(remaining_warm_up_time) <= 0 && id(target_speed) == id(target_speed_goal)) {
-                  float zone_1_min = id(max_heart_rate) * 0.5; // нижняя граница зоны 1 (50% от maxHR)
+                  float zone_1_min = id(hr_zone1_min).state; // нижняя граница зоны 1 (задаётся пользователем)
 
                   // Если пульс есть, он ниже зоны 1, и прошло хотя бы 10 секунд с последнего изменения
                   if (!isnan(heart_rate) && heart_rate < zone_1_min && (now - last_adjust_ms) >= 10000) {

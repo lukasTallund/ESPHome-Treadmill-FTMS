@@ -411,6 +411,61 @@ number:
           //}
       - script.execute: update_heart_rate_zones
 
+# HR Zone boundaries - lower bound (bpm) of each zone, entered directly
+# from a real device (e.g. a Garmin watch's own individualized zones)
+# instead of the generic age-based %-of-max-HR estimate. Used by every
+# zone lookup in the project (live display, warm-up/cool-down, HIIT
+# pulse targeting) instead of a percentage of max_heart_rate.
+  - platform: template
+    name: "HR Zone 1 Min"
+    id: hr_zone1_min
+    min_value: 60
+    max_value: 220
+    step: 1
+    initial_value: 113
+    optimistic: true
+    restore_value: yes
+
+  - platform: template
+    name: "HR Zone 2 Min"
+    id: hr_zone2_min
+    min_value: 60
+    max_value: 220
+    step: 1
+    initial_value: 140
+    optimistic: true
+    restore_value: yes
+
+  - platform: template
+    name: "HR Zone 3 Min"
+    id: hr_zone3_min
+    min_value: 60
+    max_value: 220
+    step: 1
+    initial_value: 156
+    optimistic: true
+    restore_value: yes
+
+  - platform: template
+    name: "HR Zone 4 Min"
+    id: hr_zone4_min
+    min_value: 60
+    max_value: 220
+    step: 1
+    initial_value: 166
+    optimistic: true
+    restore_value: yes
+
+  - platform: template
+    name: "HR Zone 5 Min"
+    id: hr_zone5_min
+    min_value: 60
+    max_value: 220
+    step: 1
+    initial_value: 175
+    optimistic: true
+    restore_value: yes
+
 # Weight — вес пользователя (40–100 кг).
 # При изменении отправляется на дисплей Nextion.
   - platform: template
@@ -604,29 +659,19 @@ number:
                   ESP_LOGI("TEST", "Test Heart Rate set to: %.0f bpm", x);
                   // Эмуляция обработки BLE-логики
                   float heart_rate = x;
-                  float max_hr = id(max_heart_rate);
-                  float min_zone_1 = max_hr * 0.50;
-                  float max_zone_1 = max_hr * 0.60;
-                  float min_zone_2 = max_hr * 0.60;
-                  float max_zone_2 = max_hr * 0.70;
-                  float min_zone_3 = max_hr * 0.70;
-                  float max_zone_3 = max_hr * 0.80;
-                  float min_zone_4 = max_hr * 0.80;
-                  float max_zone_4 = max_hr * 0.90;
-                  float min_zone_5 = max_hr * 0.90;
-                  float max_zone_5 = max_hr;
 
-                  // Определяем текущую зону
+                  // Определяем текущую зону - границы задаются пользователем
+                  // (HR Zone 1-5 Min), не процентом от расчётной максимальной ЧСС.
                   int heart_rate_zone = 0;
-                  if (heart_rate < min_zone_1) {
+                  if (heart_rate < id(hr_zone1_min).state) {
                     heart_rate_zone = 0;
-                  } else if (heart_rate < max_zone_1) {
+                  } else if (heart_rate < id(hr_zone2_min).state) {
                     heart_rate_zone = 1;
-                  } else if (heart_rate < max_zone_2) {
+                  } else if (heart_rate < id(hr_zone3_min).state) {
                     heart_rate_zone = 2;
-                  } else if (heart_rate < max_zone_3) {
+                  } else if (heart_rate < id(hr_zone4_min).state) {
                     heart_rate_zone = 3;
-                  } else if (heart_rate < max_zone_4) {
+                  } else if (heart_rate < id(hr_zone5_min).state) {
                     heart_rate_zone = 4;
                   } else {
                     heart_rate_zone = 5;
@@ -643,18 +688,18 @@ number:
 
                     uint16_t picture_id = 7; // Серый по умолчанию
                     uint16_t t0_bco = 21162; // Серый по умолчанию
-                    if (heart_rate < min_zone_1) {
+                    if (heart_rate < id(hr_zone1_min).state) {
                       picture_id = 7; // Серый
-                    } else if (heart_rate < max_zone_1) {
+                    } else if (heart_rate < id(hr_zone2_min).state) {
                       picture_id = 2; // Голубой
                       t0_bco = 15487;
-                    } else if (heart_rate < max_zone_2) {
+                    } else if (heart_rate < id(hr_zone3_min).state) {
                       picture_id = 3; // Зелёный
                       t0_bco = 11744;
-                    } else if (heart_rate < max_zone_3) {
+                    } else if (heart_rate < id(hr_zone4_min).state) {
                       picture_id = 4; // Жёлтый
                       t0_bco = 64992;
-                    } else if (heart_rate < max_zone_4) {
+                    } else if (heart_rate < id(hr_zone5_min).state) {
                       picture_id = 5; // Оранжевый
                       t0_bco = 64294;
                     } else {
