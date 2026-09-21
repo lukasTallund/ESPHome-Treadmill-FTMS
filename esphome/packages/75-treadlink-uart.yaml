@@ -8,11 +8,12 @@
 # (stack overflow after repeated failed BLE connections). This UART link
 # lets TreadLink drop the BLE-central role entirely.
 #
-# TX only for now (phase 1, telemetry out). RX is wired for a possible
-# future command channel (Zwift-style control relayed from TreadLink) but
-# nothing reads it yet - see discussion before adding a phase 2 parser,
-# since that would introduce a second command source alongside our own
-# BLE FTMS Control Point with no arbitration between them.
+# TX carries treadmill telemetry out (below). RX carries read-only bridge
+# diagnostics back from esp32-ant (link health: frame count, max gap,
+# stale-fallback events) - not a command channel. A real control channel
+# (Zwift-style commands relayed back to us) was intentionally never built:
+# it would introduce a second command source alongside our own BLE FTMS
+# Control Point with no arbitration between them.
 uart:
   - id: uart_treadlink
     tx_pin: GPIO14
@@ -74,3 +75,88 @@ interval:
             logged_once = true;
             ESP_LOGI("TreadLink", "Sent: %s", frame);
           }
+
+  # Reads esp32-ant's bridge-health diagnostics back on the RX line.
+  # Line formats (bracket-delimited, space-separated key=value):
+  #   [ANT speed_kmh=8.50 distance_m=152 frames=42 max_gap_ms=680 stale_events=0]
+  #   [ANT WAITING frames=42 max_gap_ms=680 stale_events=0]
+  #   [ANT STALE gap_ms=2340 event=1]
+  #   [ANT BOOT msg=...] / [ANT BOOT node_start=ok] / [ANT BOOT stride_open=0x00 device=0x5a17]
+  - interval: 200ms
+    then:
+      - lambda: |-
+          static std::string buf;
+          while (id(uart_treadlink).available()) {
+            uint8_t c;
+            id(uart_treadlink).read_byte(&c);
+            if (c == '\n') {
+              if (buf.size() >= 2 && buf.front() == '[' && buf.back() == ']') {
+                std::string content = buf.substr(1, buf.size() - 2);  // strip [ ]
+                if (content.rfind("ANT", 0) == 0) {
+                  id(ant_last_line).publish_state(content);
+
+                  bool is_stale = content.rfind("ANT STALE", 0) == 0;
+                  bool is_boot = content.rfind("ANT BOOT", 0) == 0;
+                  if (!is_boot) {
+                    id(ant_bridge_stale).publish_state(is_stale);
+                  }
+
+                  auto extract_int = [&](const char *key) -> int {
+                    std::string k = std::string(key) + "=";
+                    auto pos = content.find(k);
+                    if (pos == std::string::npos) return -1;
+                    return atoi(content.c_str() + pos + k.size());
+                  };
+
+                  int max_gap = extract_int("max_gap_ms");
+                  if (max_gap >= 0) id(ant_max_gap_ms).publish_state(max_gap);
+
+                  int stale_events = is_stale ? extract_int("event") : extract_int("stale_events");
+                  if (stale_events >= 0) id(ant_stale_events).publish_state(stale_events);
+
+                  int frames = extract_int("frames");
+                  if (frames >= 0) id(ant_frames).publish_state(frames);
+                }
+              }
+              buf.clear();
+              continue;
+            }
+            if (c >= 32 && c <= 126) {
+              buf.push_back((char) c);
+            }
+            if (buf.size() > 96) buf.clear();
+          }
+
+text_sensor:
+  - platform: template
+    name: "ANT Bridge Last Line"
+    id: ant_last_line
+    icon: "mdi:radio-tower"
+    entity_category: diagnostic
+
+binary_sensor:
+  - platform: template
+    name: "ANT Bridge Stale"
+    id: ant_bridge_stale
+    icon: "mdi:alert-circle-outline"
+    entity_category: diagnostic
+
+sensor:
+  - platform: template
+    name: "ANT Bridge Max Gap"
+    id: ant_max_gap_ms
+    unit_of_measurement: "ms"
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "ANT Bridge Stale Events"
+    id: ant_stale_events
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "ANT Bridge Frames"
+    id: ant_frames
+    entity_category: diagnostic
+    accuracy_decimals: 0
