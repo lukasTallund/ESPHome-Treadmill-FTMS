@@ -134,6 +134,7 @@ binary_sensor:
     col: 1
     on_press:
       - lambda: id(target_speed_goal) = 30;
+      - script.execute: show_speed_target_now
 
   - platform: matrix_keypad
     name: "Speed Preset 9 Button"
@@ -142,6 +143,7 @@ binary_sensor:
     col: 2
     on_press:
       - lambda: id(target_speed_goal) = 90;
+      - script.execute: show_speed_target_now
 
   - platform: matrix_keypad
     name: "Incline Up Button"
@@ -161,6 +163,7 @@ binary_sensor:
     col: 2
     on_press:
       - lambda: id(target_speed_goal) = 60;
+      - script.execute: show_speed_target_now
 
   - platform: matrix_keypad
     name: "Incline Down Button"

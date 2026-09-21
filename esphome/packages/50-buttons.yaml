@@ -70,6 +70,7 @@ button:
           if (id(motor_running) && id(target_speed_goal) < ${speed_max_tenths}) {
             id(target_speed_goal) += 1;  // +0.1 км/ч
           }
+      - script.execute: show_speed_target_now
 
 # Speed +0.5 — увеличивает целевую скорость на 0.5 км/ч (если мотор работает и скорость < 18.0 км/ч).
   - platform: template
@@ -81,6 +82,7 @@ button:
           if (id(motor_running) && id(target_speed_goal) < ${speed_max_tenths}) {
             id(target_speed_goal) += 5;  // +0.5 км/ч
           }
+      - script.execute: show_speed_target_now
 
 # Speed -0.1 — уменьшает целевую скорость на 0.1 км/ч (если мотор работает и скорость > 0.6 км/ч).
 #     - Дополнительно есть защита: скорость не может быть меньше 0.6 км/ч (значение 6 в целых единицах).
@@ -94,6 +96,7 @@ button:
             id(target_speed_goal) -= 1;  // -0.1 км/ч
             if (id(target_speed_goal) < 6) id(target_speed_goal) = 6; // защита от <0.6 км/ч
           }
+      - script.execute: show_speed_target_now
 
 #  Speed -0.5 — уменьшает целевую скорость на 0.5 км/ч (если мотор работает и скорость > 0.6 км/ч).
 #    - Также с защитой от выхода ниже минимального порога.
@@ -107,6 +110,7 @@ button:
             id(target_speed_goal) -= 5;  // -0.5 км/ч
             if (id(target_speed_goal) < 6) id(target_speed_goal) = 6; // защита от <0.6 км/ч
           }
+      - script.execute: show_speed_target_now
 
 
 # Кнопки изменения наклона беговой дорожки

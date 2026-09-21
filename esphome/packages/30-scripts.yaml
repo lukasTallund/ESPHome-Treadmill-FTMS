@@ -95,6 +95,21 @@ script:
             - button.press: incline_up_button
             - delay: 150ms
 
+  # Immediately shows the current speed target on the Nextion display,
+  # instead of waiting for the once-a-second ramp-based update in
+  # 60-sensors.yaml. Pressing a speed button gives instant confirmation
+  # of the new target (e.g. "12.0") even though the belt then takes a
+  # few seconds to actually ramp up to it - the ramp's own display
+  # update will naturally take back over as it catches up.
+  - id: show_speed_target_now
+    then:
+      - lambda: |-
+          if (id(current_page) == 1) {
+            char speed_str[10];
+            sprintf(speed_str, "%.1f", id(target_speed_goal) / 10.0f);
+            id(display_nextion).set_component_text("t1", speed_str);
+          }
+
   - id: keypad_incline_down_repeat
     mode: restart
     then:
