@@ -24,6 +24,13 @@ uart:
 # sends to Zwift over BLE FTMS, so the Garmin-via-TreadLink view matches
 # the Zwift view instead of using a second, possibly-inconsistent source
 # (e.g. the noisier FC-33-derived actual speed).
+#
+# NOTE for any consumer of this frame: despite the field name,
+# speed_001kmh is in steps of 0.01 km/h (hundredths), not 0.001
+# (thousandths) - trust the worked example below over the name. A
+# downstream consumer (esp32-ant) initially trusted the name and got
+# exactly 10x too-low speed/pace until they matched it to this example.
+# Example: 00850 = 8.50 km/h (850 * 0.01), not 0.85 km/h.
 interval:
   - interval: 700ms
     then:
@@ -36,6 +43,7 @@ interval:
           if (isnan(incline)) incline = 0.0f;
           if (isnan(distance_km)) distance_km = 0.0f;
 
+          // *100, not *1000 - see the frame-format note above the "interval:" key.
           int speed_001kmh = (int) lroundf(speed_kph * 100.0f);
           if (speed_001kmh < 0) speed_001kmh = 0;
           if (speed_001kmh > 99999) speed_001kmh = 99999;
